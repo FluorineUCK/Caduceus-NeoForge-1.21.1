@@ -1,0 +1,10 @@
+pluginManagement {
+    repositories {
+        maven { url = "https://maven.neoforged.net/releases/" }
+        maven { url = "https://repo.clojars.org/" }
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+rootProject.name = "caduceus-neoforge-port"

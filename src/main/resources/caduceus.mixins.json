@@ -1,0 +1,17 @@
+{
+  "required": true,
+  "package": "gay.object.caduceus.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "minVersion": "0.8",
+  "client": [
+  ],
+  "mixins": [
+    "MixinSpellContinuationCompanion",
+    "actions.MixinOpSplat",
+    "iota.MixinContinuationIota",
+    "template.MixinAllContinuationFrames"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}

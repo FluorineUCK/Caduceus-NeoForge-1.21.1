@@ -1,0 +1,124 @@
+plugins {
+    id "java-library"
+    id "net.neoforged.moddev" version "2.0.141"
+    id "dev.clojurephant.clojure" version "0.8.0"
+}
+
+version = project.mod_version
+group = project.maven_group
+
+base {
+    archivesName = project.archives_base_name
+}
+
+configurations {
+    embed
+    localRuntime
+    runtimeClasspath.extendsFrom localRuntime
+}
+
+neoForge {
+    version = project.neo_forge_version
+
+    runs {
+        client { client() }
+        server {
+            server()
+            programArgument "--nogui"
+        }
+        configureEach {
+            logLevel = org.slf4j.event.Level.INFO
+            additionalRuntimeClasspathConfiguration.extendsFrom(configurations.embed)
+        }
+    }
+
+    mods {
+        caduceus {
+            sourceSet(sourceSets.main)
+        }
+    }
+}
+
+repositories {
+    mavenCentral()
+    maven { url "https://repo.clojars.org/" }
+    maven { url "https://maven.neoforged.net/releases/" }
+    maven { url "https://thedarkcolour.github.io/KotlinForForge/" }
+}
+
+dependencies {
+    implementation files("libs/hexcasting-neoforge-${project.minecraft_version}-${project.hexcasting_version}.jar")
+    localRuntime files("libs/hexcasting-neoforge-${project.minecraft_version}-${project.hexcasting_version}.jar")
+    localRuntime files("libs/paucal-${project.paucal_version}+${project.minecraft_version}-neoforge.jar")
+    localRuntime files("libs/inline-${project.minecraft_version}-${project.inline_version}-neoforge-devruntime.jar")
+    localRuntime files("libs/caelus-neoforge-${project.caelus_version}.jar")
+    localRuntime files("libs/Patchouli-${project.minecraft_version}-${project.patchouli_version}-NEOFORGE.jar")
+    localRuntime files("libs/architectury-neoforge-${project.architectury_version}.jar")
+    localRuntime files("libs/cloth-config-neoforge-15.0.130.jar")
+    implementation "thedarkcolour:kotlinforforge-neoforge:${project.kotlin_for_forge_version}"
+
+    compileOnly "org.jetbrains.kotlin:kotlin-stdlib-jdk8:2.2.21"
+
+    implementation files("libs/clojure-1.12.1.jar")
+    implementation files("libs/core.specs.alpha-0.4.74.jar")
+    implementation files("libs/spec.alpha-0.5.238.jar")
+    embed files("libs/clojure-1.12.1.jar")
+    embed files("libs/core.specs.alpha-0.4.74.jar")
+    embed files("libs/spec.alpha-0.5.238.jar")
+}
+
+clojure {
+    builds {
+        main {
+            classpath.setFrom(sourceSets.main.compileClasspath)
+            aotAll()
+            reflection = "warn"
+            compiler {
+                directLinking = true
+                elideMeta.add("tag")
+            }
+        }
+    }
+}
+
+tasks.named("compileJava", JavaCompile) {
+    options.encoding = "UTF-8"
+    options.release = 21
+}
+
+tasks.named("compileClojure") {
+    dependsOn tasks.named("compileJava")
+    classpath.from(tasks.named("compileJava").flatMap { it.destinationDirectory })
+}
+
+tasks.named("checkClojure") {
+    dependsOn tasks.named("compileJava")
+    classpath.from(tasks.named("compileJava").flatMap { it.destinationDirectory })
+}
+
+processResources {
+    inputs.property "version", project.version
+    filesMatching("META-INF/neoforge.mods.toml") {
+        expand "version": project.version
+    }
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(21)
+    withSourcesJar()
+}
+
+jar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    from {
+        configurations.embed.collect { zipTree(it) }
+    }
+    exclude "META-INF/*.SF", "META-INF/*.DSA", "META-INF/*.RSA"
+    from("LICENSE") {
+        rename { "${it}_${project.archives_base_name}" }
+    }
+}
+
+tasks.withType(GenerateModuleMetadata).configureEach {
+    enabled = false
+}
